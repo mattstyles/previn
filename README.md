@@ -313,3 +313,23 @@ This ramps up the difficulty and introduces inter-dependence between composed mo
 Some of this risk can be dissipated by all composed modules not taking anything for granted i.e. if they rely upon `this.position` then they should check it exists or create it in the constructor using `this.position = this.position || [ 0, 0 ]` or some other method.
 
 Similarly checking that `super` or `super.functionName` exists might be prudent.
+
+### Performance
+
+Creating complex inheritance chains is not entirely without its performance issues in Javascript. Always test performance for your particular use-case and whether the code organisational benefits of inheritance and mixins is worth it.
+
+## Installing Previn
+
+The `compose` function highlighted above is included in this repo and available on npm, but, in all seriousness you probably want to use a little bit of copy-paste inheritance and extend that function to perform some error checking, or manually set the `Base` class or do loads more simple stuff that is related to your unique use-case.
+
+But, if you’re deadset on installing then, using [npm], do:
+
+```sh
+npm i -S previn
+```
+
+## License
+
+WTFPL
+
+Please give a credit if you copy-paste any of this readme anywhere, but its not necessary, not too much of this is anything particularly new, but give me a shout, I’d love to read about different/better patterns.
