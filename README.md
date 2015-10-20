@@ -328,6 +328,18 @@ But, if you’re deadset on installing then, using [npm], do:
 npm i -S previn
 ```
 
+## Examples
+
+There’s a couple of little examples inside the `examples` folder
+
+You can use
+
+```js
+npm run example
+```
+
+They'll run in node but it’ll use [browserify](http://browserify.org/) to package it so you can see it in the browser if you really want to. To run a different example alter the script target in the package.json.
+
 ## License
 
 WTFPL
