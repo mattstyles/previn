@@ -9,30 +9,30 @@ The problem stems from wanting to implement behaviours independently from the cl
 
 In the [React](https://facebook.github.io/react/) library these were simply referred to as mixins, but, as they have access to the lifecycle methods via inheritance of the React components they are mixed into they perform a larger service than simply copying or cloning methods on to a prototype.
 
-Regular mixins, in a traditional sense, work by copying or cloning methods on to the prototype, overriding methods already found thereupon. So, thats simply you say, just have one class extend from another and you have those methods you want in your inheritance chain, which is fine, but, what if those classes are not causally linked?
+Regular mixins, in a traditional sense, work by copying or cloning methods on to the prototype, overriding methods already found thereupon. So, thats simple you say, just have one class extend from another and you have those methods you want in your inheritance chain, which is fine, but, what if those classes are not causally linked?
 
 Without great complexity how would I implement class A as a parent of class B if class B is already a child of class C? Add class A as a parent of class C? Yep, that would work but now ties C to A, which might be undesirable.
 
 ### Inheritance Chain and `extend`
 
-A diagram should help clear up this conundrum (ignore that you can’t actually call a class `Object` in JS):
+A diagram should help clear up this conundrum:
 
 ```
-Object
+BaseObject
   |
 Entity
 ```
 
-This is a simple inheritance chain, no problems implementing this in JS (we’ll use the `class` syntax rather than the old way of faking classes in JS):
+This is a simple inheritance chain, no problems implementing this in JS (we’ll use the `class` syntax to fake classes rather than the old way of faking classes in JS):
 
 ```js
-class Entity extends Object { ... }
+class Entity extends BaseObject { ... }
 ```
 
-So far, so good. `Entity` can be used as is already if it implements what we need, but suppose I want a super-entity that has more extra goodness? No problems extending again to increase the inheritance chain:
+So far, so good. `Entity` can be used as it implements what we need, but suppose I want a super-entity that has more extra goodness? No problems extending again to increase the inheritance chain:
 
 ```
-Object
+BaseObject
   |
 Entity
   |
@@ -43,10 +43,10 @@ Moveable
 class Moveable extends Entity { ... }
 ```
 
-We now get access to methods of `Object` and `Entity` and all is happily ticking along. We now can implement entities and moving entities in our world. Say we want entities that are clickable:
+We now get access to methods of `BaseObject` and `Entity` and all is happily ticking along. We now can implement entities and moving entities in our world. Say we want entities that are clickable:
 
 ```
-Object
+BaseObject
   |
 Entity
   |
@@ -61,7 +61,7 @@ Ok, that still makes sense.
 
 But you see where we’re heading right? What about if we need a clickable and moveable entity?
 
-We can create a `Movey-Clickey` class that extends `Moveable` or `Clickable` and re-implements the methods of the other whilst having access to `Entity` and `Object` methods, but thats particularly rubbish, we’d like to be as [DRY](http://c2.com/cgi/wiki?DontRepeatYourself) as possible if we can and this duplicative solution scales particularly badly.
+We can create a `Movey-Clickey` class that extends `Moveable` or `Clickable` and re-implements the methods of the other whilst having access to `Entity` and `BaseObject` methods, but thats particularly rubbish, we’d like to be as [DRY](http://c2.com/cgi/wiki?DontRepeatYourself) as possible if we can and this duplicative solution scales particularly badly.
 
 ### Traditional mixin pattern
 
@@ -83,7 +83,7 @@ This is a fairly basic mixin function that whacks props from `mixer` on to `base
 We can use this function within the `Entity` class constructor to tack on the mixin methods/props:
 
 ```js
-class Entity extends Object {
+class Entity extends BaseObject {
     constructor() {
         mixin( this, Clickable )
         mixin( this, Moveable )
@@ -121,7 +121,7 @@ class Clickable extends Entity {
 }
 ```
 
-However, this breaks if we try to mix `Clickable` into `Entity` as clickable either replaces the existing `update` functionality or throws an error saying that the method already exists.
+However, this breaks if we try to mix `Clickable` into `Entity` as clickable either replaces the existing `update` functionality or throws an error saying that the method already exists (depending on the implementation of the mixin function).
 
 For many mixins, those that add functionality, this isn’t a particular problem. But for architectures like React or Angular that define lifecycle methods common to their components a requirement of a mixin could be to hook into those lifecycle methods.
 
@@ -188,7 +188,7 @@ The first is that invoking `Button:update` will actually throw an error in this 
 
 `Button:update` calls its `super` method which invokes `Clickable:update`, which in turn calls its own `super` method, however, `Base:update` does not exist and so will throw.
 
-There are solutions; a simple solution would be to remove the `super` call from the `Clickable:update` method so that `Base:update` never gets called but this is problematic if you want to mixin other behaviours too, so, the a better solution would be to implement a no-op on the `Base` class defined within `compose`:
+There are solutions; a simple solution would be to remove the `super` call from the `Clickable:update` method so that `Base:update` never gets called but this is problematic if you want to mix in other behaviours too, so, a better solution would be to implement a no-op on the `Base` class defined within `compose`:
 
 
 ```js
@@ -211,8 +211,8 @@ This works great but requires the `Base` class to implement an abstract method f
 Another solution would be to define a Parent class to use for our inheritance chain so that `Base` never becomes the ultimate parent, and, as luck would have it, with a little bit of extra effort to our classes we can implement this without touching our `compose` function:
 
 ```js
-class Entity extends Object {
-    static compose = () => {
+class Entity extends BaseObject {
+    static compose() {
         return Entity
     }
 
@@ -221,7 +221,7 @@ class Entity extends Object {
     }
 
     update() {
-        // No need to call super here unless you want to use Object:update
+        // No need to call super here unless you want to use BaseObject:update
     }
 }
 ```
@@ -244,7 +244,7 @@ class Button extends compose( Entity.compose, Clickable, Moveable ) {
 In this case the first parameter becomes the root class of the inheritance chain and the mixin-style classes are added on to the prototype before `Button` extends the resultant class so that the inheritance chain ends up like this:
 
 ```
-Object
+BaseObject
   |
 Entity
   |
@@ -259,7 +259,7 @@ Button
 
 We have now managed to implement a `Button` class that inherits from multiple sources and allows its “mixins” access to its prototype.
 
-**Compose all the things**
+**Compose all the things!**
 
 ## Caveats
 
@@ -271,7 +271,7 @@ The `compose` function passes one argument as a parent class of another, meaning
 
 The only exception is that the first class in the inheritance chain which can come with whatever inherited classes it likes.
 
-This tree is difficult to create and would require a slightly complex series of intermediate steps to create:
+The following is difficult to create and would require a slightly complex series of intermediate steps to create:
 
 ```
              Button
@@ -280,18 +280,19 @@ Clickable   UIEntity   Moveable
    |           |
 Tappable     Entity
                |
-             Object
+           BaseObject
 ```
 
 Ideally, this would work:
 
 ```js
+// ANTI-PATTERN wont work!
 class Button extends compose( UIEntity.compose, Clickable, Moveable ) {}
 ```
 
 But it won’t as `Clickable` extends `Tappable`, and can’t also extend the `Base` it will be passed (in this case `UIEntity`).
 
-It is possible to create a prototype chain to represent the above, but, its fragile and creates inter-dependent mixins which is probably a very very bad thing to rely upon. Mixin order can solve this riddle but will load the complexity.
+It is possible to create a prototype chain to represent the above, but, its fragile and creates inter-dependent mixins which is probably a very very bad thing to rely upon. Mixin order can solve this riddle but will load the complexity and also add inter-dependence.
 
 There is also a further, but even more complex, method for creating complex inheritance chains but it requires creating intermediate classes which may have little value by themselves:
 
@@ -317,6 +318,20 @@ Similarly checking that `super` or `super.functionName` exists might be prudent.
 ### Performance
 
 Creating complex inheritance chains is not entirely without its performance issues in Javascript. Always test performance for your particular use-case and whether the code organisational benefits of inheritance and mixins is worth it.
+
+### Missing `supers`
+
+If a mixin implements a common (or lifecycle) method that exists on the prototype, such as `update` in our examples, but fails to call `super` then the rest of the inheritance chain will never get called. This could be advantageous for mixins that radically alter behaviour of an object, but, in general is a terrible thing to do and breaks whatever sense of interoperability between mixins that we have built.
+
+As a general rule of thumb, _always call super on common methods_.
+
+A curious side-effect that is useful is that there is no restriction on _when_ you call `super`. It adds complexity to call it in different places but could certainly be useful in some cases.
+
+### _Mixins_ should be focussed in scope
+
+Giving mixins a free-for-all on the prototype would result in a royal mess, there’s nothing to stop this occurring with multiple mixins all stamping over each other and, of course, there is the winding problem of a list of mixins where order is important.
+
+To mitigate this problem it is _easiest_ if mixins are tight in scope, it at least makes stack traces a little easier to follow.
 
 ## Installing Previn
 
