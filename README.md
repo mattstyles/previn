@@ -267,9 +267,9 @@ Unfortunately this solution is not a silver bullet for smudging multiple inherit
 
 ### _Mixins_ can not inherit from any other source
 
-The `compose` function passes one argument as a parent class of another, meaning that a _mixin_ like `Clickable` must extend the first argument in the list of classes, whilst the next class inherits from the `Clickable` inheritance chain.
+The `compose` function passes one argument as a parent class of another, meaning that a _mixin_, like `Clickable`, must extend the first argument in the list of classes, whilst the next class inherits from the `Clickable` inheritance chain.
 
-The only exception is that the first class in the inheritance chain which can come with whatever inherited classes it likes.
+The only exception is that the first class in the inheritance chain can come with whatever inherited classes it likes as it can be freed of extending the first `Base`.
 
 The following is difficult to create and would require a slightly complex series of intermediate steps to create:
 
@@ -292,9 +292,9 @@ class Button extends compose( UIEntity.compose, Clickable, Moveable ) {}
 
 But it won’t as `Clickable` extends `Tappable`, and can’t also extend the `Base` it will be passed (in this case `UIEntity`).
 
-It is possible to create a prototype chain to represent the above, but, its fragile and creates inter-dependent mixins which is probably a very very bad thing to rely upon. Mixin order can solve this riddle but will load the complexity and also add inter-dependence.
+It is possible to create a prototype chain to represent the above, but its fragile and creates inter-dependent mixins which is probably a very very bad thing to rely upon. Mixin order can solve this riddle but will increase the complexity and also add inter-dependence.
 
-There is also a further, but even more complex, method for creating complex inheritance chains but it requires creating intermediate classes which may have little value by themselves:
+There is also a further, even more complex, method for creating complicated inheritance chains but it requires creating intermediate classes which may have little value by themselves:
 
 ```js
 class TwirlyButton extends compose( Button.compose, Rotateable ) {}
@@ -309,7 +309,7 @@ Part of mitigating the above scenario could be to implement dependent mixins:
 class Button extends compose( UIEntity.compose, Tappable, Clickable, Moveable ) {}
 ```
 
-This ramps up the difficulty and introduces inter-dependence between composed modules, in this case `Clickable` relies upon `Tappable`.
+This ramps up the difficulty and introduces inter-dependence between composed modules, in this case `Clickable` relies upon `Tappable` and `Tappable` must be earlier in the list which is a messy and error-prone way of defining dependencies (not to mention tracking down errors thrown from out-of-order mixins could be a nightmare).
 
 Some of this risk can be dissipated by all composed modules not taking anything for granted i.e. if they rely upon `this.position` then they should check it exists or create it in the constructor using `this.position = this.position || [ 0, 0 ]` or some other method.
 
@@ -321,11 +321,11 @@ Creating complex inheritance chains is not entirely without its performance issu
 
 ### Missing `supers`
 
-If a mixin implements a common (or lifecycle) method that exists on the prototype, such as `update` in our examples, but fails to call `super` then the rest of the inheritance chain will never get called. This could be advantageous for mixins that radically alter behaviour of an object, but, in general is a terrible thing to do and breaks whatever sense of interoperability between mixins that we have built.
+If a mixin implements a common (or lifecycle) method that exists on the prototype, such as `update` in our examples, but fails to call `super` then the rest of the inheritance chain will never get called. This could be advantageous for mixins that radically alter behaviour of an object, but, in general, is a terrible thing to do and breaks whatever sense of interoperability between mixins that we have built.
 
 As a general rule of thumb, _always call super on common methods_.
 
-A curious side-effect that is useful is that there is no restriction on _when_ you call `super`. It adds complexity to call it in different places but could certainly be useful in some cases.
+A curious side-effect that is useful is that there is no restriction on _when_ you call `super` (outside of the constructor). It adds complexity to call it in different places but could certainly be useful in some cases.
 
 ### _Mixins_ should be focussed in scope
 
