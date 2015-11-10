@@ -244,8 +244,6 @@ class Button extends compose( Entity.compose, Clickable, Moveable ) {
 In this case the first parameter becomes the root class of the inheritance chain and the mixin-style classes are added on to the prototype before `Button` extends the resultant class so that the inheritance chain ends up like this:
 
 ```
-BaseObject
-  |
 Entity
   |
 Clickable
@@ -337,7 +335,7 @@ To mitigate this problem it is _easiest_ if mixins are tight in scope, it at lea
 
 The `compose` function highlighted above is included in this repo and available on npm, but, in all seriousness you probably want to use a little bit of copy-paste inheritance and extend that function to perform some error checking, or manually set the `Base` class or do loads more simple stuff that is related to your unique use-case.
 
-But, if you’re deadset on installing then, using [npm], do:
+But, if you’re deadset on installing then, using [npm](https://www.npmjs.com/), do:
 
 ```sh
 npm i -S previn
